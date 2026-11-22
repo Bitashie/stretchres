@@ -1,0 +1,17 @@
+# Build output
+bin/
+obj/
+*.exe
+*.pdb
+
+# Diagnostic / dev output
+selftest*.txt
+*.err.txt
+config.txt
+
+# OS / editors
+Thumbs.db
+desktop.ini
+.vs/
+.vscode/
+*.user
