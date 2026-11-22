@@ -3,7 +3,7 @@
 **Résolution étirée automatique pour tes jeux, en un clic.**
 StretchRes passe ton écran en résolution étirée (1440×1080, 1280×960…) dès qu'un jeu choisi se lance, puis remet la résolution native quand tu le quittes.
 
-> *EN: Windows tray app that automatically switches to a stretched resolution when a chosen game starts and restores your native resolution when it closes. The UI is in French.*
+> *EN: Windows tray app that automatically switches to a stretched resolution when a chosen game starts and restores your native resolution when it closes. Available in English, French, Spanish, Russian, Japanese and Chinese.*
 
 ![Capture de StretchRes](docs/screenshot.png)
 
@@ -14,12 +14,13 @@ StretchRes passe ton écran en résolution étirée (1440×1080, 1280×960…) d
 - **Scanner mes jeux** : trouve tout seul les jeux installés (Steam, Epic, etc.) et les ajoute à la liste.
 - **Écran normal pendant Alt+Tab** : le bureau reste en résolution native quand tu sors du jeu.
 - **Résolutions favorites**, bouton **Tester 10 secondes**, lancement discret avec Windows (icône près de l'horloge).
+- **6 langues** : français, English, español, русский, 日本語, 中文. Choisie au premier lancement, modifiable à tout moment en haut à droite de la fenêtre.
 - Léger : un seul `.exe` d'environ 75 Ko, sans dépendance à installer.
 
 ## Installation
 
 1. Télécharge `StretchRes.exe` depuis la page [**Releases**](https://github.com/Bitashie/stretchres/releases/latest).
-2. Lance-le. Il s'installe dans `%LOCALAPPDATA%\StretchRes`, se lance avec Windows et ouvre sa fenêtre.
+2. Lance-le et choisis ta langue. Il s'installe dans `%LOCALAPPDATA%\StretchRes`, se lance avec Windows et ouvre sa fenêtre.
 3. Clique sur **Scanner mes jeux** ou **+ Ajouter**, puis choisis le format de chaque jeu.
 
 Pour une mise à jour, lance simplement le nouveau `.exe` : il ferme l'ancienne version et la remplace.
@@ -30,7 +31,7 @@ Pour l'utiliser sans l'installer : `StretchRes.exe --portable`.
 ### Conseils
 
 - Dans le jeu, choisis le mode **« Plein écran fenêtré »**.
-- S'il reste des bandes noires (NVIDIA) : *Panneau de configuration NVIDIA → Ajuster la taille et la position du bureau* → « Plein écran », mise à l'échelle sur « GPU », et coche « Remplacer le mode défini par les jeux et les programmes ».
+- S'il reste des bandes noires (NVIDIA) : *Panneau de configuration NVIDIA → Ajuster la taille et la position du bureau* → « Plein écran », mise à l'échelle sur « GPU », et décoche « Remplacer le mode défini par les jeux et les programmes » (comme indiqué dans l'appli).
 - En cas de souci, clic droit sur l'icône → **Remettre la résolution normale**.
 
 ## Compiler depuis les sources
@@ -50,6 +51,11 @@ Options en ligne de commande utiles pour le développement :
 | `--portable` | Lance sans s'installer ni s'ajouter au démarrage |
 | `--selftest fichier.txt` | Écrit un diagnostic (écran, modes disponibles, jeux trouvés) sans rien modifier |
 | `--snap image.png` | Capture la fenêtre avec des jeux d'exemple, sans rien enregistrer |
+| `--snap image.png --lang en` | Même capture dans une langue donnée (`fr`, `en`, `es`, `ru`, `ja`, `zh`) |
+
+### Ajouter ou corriger une traduction
+
+Tous les textes sont dans la classe `L` au début de [`src/StretchRes.cs`](src/StretchRes.cs) : une ligne par texte, avec une traduction par langue dans l'ordre `fr, en, es, ru, ja, zh`. Pour une nouvelle langue, ajoute son code dans `Codes`, son nom dans `Names`, puis une traduction à la même position sur chaque ligne.
 
 ## Configuration
 

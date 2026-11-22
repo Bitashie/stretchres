@@ -10,7 +10,7 @@ if (-not (Test-Path $csc)) { throw '.NET Framework 4 C# compiler (csc.exe) not f
 $out = Join-Path $root 'bin'
 New-Item -ItemType Directory -Force $out | Out-Null
 
-& $csc /nologo /target:winexe /optimize+ /platform:anycpu `
+& $csc /nologo /target:winexe /optimize+ /platform:anycpu /codepage:65001 `
     "/out:$out\StretchRes.exe" `
     /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll `
     (Join-Path $root 'src\StretchRes.cs')

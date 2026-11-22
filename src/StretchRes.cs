@@ -17,7 +17,8 @@ using Microsoft.Win32;
 
 [assembly: System.Reflection.AssemblyTitle("StretchRes")]
 [assembly: System.Reflection.AssemblyProduct("StretchRes")]
-[assembly: System.Reflection.AssemblyVersion("1.0.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.1.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.1.0.0")]
 
 namespace StretchRes
 {
@@ -177,6 +178,189 @@ namespace StretchRes
     {
         public uint type; public uint size; public LUID adapterId; public uint id;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string viewGdiDeviceName;
+    }
+
+    // ------------------------------------------------------------------ Langues
+    // Chaque texte : { fr, en, es, ru, ja, zh }. Pour ajouter une langue : un code dans Codes,
+    // son nom dans Names, puis une traduction a la meme position dans chaque ligne de D.
+    static class L
+    {
+        public static readonly string[] Codes = { "fr", "en", "es", "ru", "ja", "zh" };
+        public static readonly string[] Names = { "Français", "English", "Español", "Русский", "日本語", "中文" };
+        static int idx;
+
+        public static string Code { get { return Codes[idx]; } }
+        public static int Index { get { return idx; } }
+
+        public static bool Set(string code)
+        {
+            int i = Array.IndexOf(Codes, code ?? "");
+            if (i < 0) return false;
+            idx = i;
+            return true;
+        }
+
+        // Langue de Windows si elle est disponible, sinon anglais.
+        public static string Detect()
+        {
+            string two = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+            return Array.IndexOf(Codes, two) >= 0 ? two : "en";
+        }
+
+        // Police adaptee a l'ecriture (les polices CJK de Windows ont la meme allure que Segoe UI).
+        public static string FontName
+        {
+            get { return Code == "ja" ? "Yu Gothic UI" : Code == "zh" ? "Microsoft YaHei UI" : "Segoe UI"; }
+        }
+
+        public static string T(string key)
+        {
+            string[] a;
+            if (!D.TryGetValue(key, out a)) return key;
+            return a[idx] ?? a[1];
+        }
+
+        public static string F(string key, params object[] args) { return string.Format(T(key), args); }
+
+        static readonly Dictionary<string, string[]> D = new Dictionary<string, string[]>
+        {
+            // --- fenetre principale
+            { "title", new[] { "StretchRes — résolutions étirées pour tes jeux", "StretchRes — stretched resolutions for your games", "StretchRes — resoluciones estiradas para tus juegos", "StretchRes — растянутое разрешение для игр", "StretchRes — ゲーム用の引き伸ばし解像度", "StretchRes — 为你的游戏设置拉伸分辨率" } },
+            { "subtitle", new[] { "Tes jeux passent tout seuls au bon format, puis l'écran revient à la normale.", "Your games switch to the right format on their own, then the screen goes back to normal.", "Tus juegos cambian solos al formato correcto y luego la pantalla vuelve a la normalidad.", "Игры сами переходят в нужный формат, а потом экран возвращается к обычному.", "ゲームが自動で最適な解像度に切り替わり、終了すると画面は元に戻ります。", "游戏启动时自动切换到合适的分辨率，退出后屏幕恢复正常。" } },
+            { "lang", new[] { "Langue", "Language", "Idioma", "Язык", "言語", "语言" } },
+            { "my_games", new[] { "MES JEUX", "MY GAMES", "MIS JUEGOS", "МОИ ИГРЫ", "マイゲーム", "我的游戏" } },
+            { "search", new[] { "Rechercher un jeu…  (Ctrl+F)", "Search for a game…  (Ctrl+F)", "Buscar un juego…  (Ctrl+F)", "Поиск игры…  (Ctrl+F)", "ゲームを検索…  (Ctrl+F)", "搜索游戏…  (Ctrl+F)" } },
+            { "empty", new[] { "Aucun jeu pour l'instant.\nClique sur « Scanner mes jeux ».", "No games yet.\nClick “Scan my games”.", "Aún no hay juegos.\nHaz clic en «Buscar mis juegos».", "Игр пока нет.\nНажмите «Найти мои игры».", "まだゲームがありません。\n「ゲームをスキャン」をクリックしてください。", "还没有游戏。\n点击“扫描我的游戏”。" } },
+            { "no_match", new[] { "Aucun jeu ne correspond à « {0} ».", "No game matches “{0}”.", "Ningún juego coincide con «{0}».", "Нет игр по запросу «{0}».", "「{0}」に一致するゲームはありません。", "没有与“{0}”匹配的游戏。" } },
+            { "scan", new[] { "⟳  Scanner mes jeux", "⟳  Scan my games", "⟳  Buscar mis juegos", "⟳  Найти мои игры", "⟳  ゲームをスキャン", "⟳  扫描我的游戏" } },
+            { "scanning", new[] { "Scan en cours…", "Scanning…", "Buscando…", "Поиск…", "スキャン中…", "正在扫描…" } },
+            { "add", new[] { "+ Ajouter", "+ Add", "+ Añadir", "+ Добавить", "+ 追加", "+ 添加" } },
+            { "remove", new[] { "Retirer", "Remove", "Quitar", "Убрать", "削除", "移除" } },
+            { "settings", new[] { "RÉGLAGES DU JEU", "GAME SETTINGS", "AJUSTES DEL JUEGO", "НАСТРОЙКИ ИГРЫ", "ゲーム設定", "游戏设置" } },
+            { "name", new[] { "Nom", "Name", "Nombre", "Название", "名前", "名称" } },
+            { "watched", new[] { "Programme surveillé", "Watched program", "Programa vigilado", "Отслеживаемая программа", "監視するプログラム", "监视的程序" } },
+            { "format", new[] { "Format quand le jeu est lancé", "Resolution while the game is running", "Resolución mientras el juego está abierto", "Разрешение во время игры", "ゲーム起動中の解像度", "游戏运行时的分辨率" } },
+            { "enabled", new[] { "Activé pour ce jeu", "Enabled for this game", "Activado para este juego", "Включено для этой игры", "このゲームで有効", "对此游戏启用" } },
+            { "test", new[] { "Tester 10 secondes", "Test for 10 seconds", "Probar 10 segundos", "Тест на 10 секунд", "10秒間テスト", "测试 10 秒" } },
+            { "test_back", new[] { "Retour dans {0} s (arrêter)", "Back in {0} s (stop)", "Vuelve en {0} s (detener)", "Возврат через {0} с (стоп)", "あと{0}秒で戻ります（停止）", "{0} 秒后恢复（停止）" } },
+            { "hint", new[] {
+                "Dans le jeu : mode « Plein écran fenêtré ». StretchRes demande à la carte graphique d'étirer l'image. S'il reste des bandes noires : Panneau NVIDIA → Ajuster la taille et la position du bureau → « Plein écran », mise à l'échelle sur « GPU », et décoche « Remplacer le mode défini par les jeux ».",
+                "In the game: “Windowed fullscreen” mode. StretchRes asks the graphics card to stretch the image. If black bars remain: NVIDIA panel → Adjust desktop size and position → “Full-screen”, scaling on “GPU”, and uncheck “Override the scaling mode set by games”.",
+                "En el juego: modo «Pantalla completa en ventana». StretchRes pide a la tarjeta gráfica que estire la imagen. Si quedan barras negras: panel NVIDIA → Ajustar el tamaño y la posición del escritorio → «Pantalla completa», escalado en «GPU», y desmarca «Anular el modo de escala de los juegos».",
+                "В игре: режим «Оконный полноэкранный». StretchRes просит видеокарту растянуть картинку. Если остались чёрные полосы: панель NVIDIA → Регулировка размера и положения рабочего стола → «Во весь экран», масштабирование на «ГП», и снимите флажок «Замещение режима масштабирования игр».",
+                "ゲーム内では「ボーダーレス（ウィンドウ化フルスクリーン）」を選択。StretchRes がグラフィックカードに画像の引き伸ばしを指示します。黒い帯が残る場合：NVIDIA コントロールパネル → デスクトップのサイズと位置の調整 →「フルスクリーン」、スケーリングを「GPU」で実行し、「ゲームで設定されたスケーリングモードを上書き」のチェックを外します。",
+                "游戏中请选择“窗口化全屏（无边框）”模式。StretchRes 会让显卡拉伸画面。如果仍有黑边：NVIDIA 控制面板 → 调整桌面尺寸和位置 → “全屏”，在“GPU”上执行缩放，并取消勾选“覆盖由游戏设置的缩放模式”。" } },
+            { "startup", new[] { "Lancer avec Windows", "Start with Windows", "Iniciar con Windows", "Запуск с Windows", "Windows 起動時に実行", "开机自启动" } },
+            { "stretch", new[] { "Étirer l'image", "Stretch the image", "Estirar la imagen", "Растягивать картинку", "画像を引き伸ばす", "拉伸画面" } },
+            { "alttab", new[] { "Écran normal pendant Alt+Tab", "Normal screen during Alt+Tab", "Pantalla normal durante Alt+Tab", "Обычный экран при Alt+Tab", "Alt+Tab 中は通常の画面", "Alt+Tab 时恢复正常屏幕" } },
+            { "uninstall", new[] { "Désinstaller", "Uninstall", "Desinstalar", "Удалить", "アンインストール", "卸载" } },
+            { "uninstall_q", new[] { "Désinstaller StretchRes ?\nIl ne se lancera plus au démarrage et tes réglages seront supprimés.", "Uninstall StretchRes?\nIt will no longer start with Windows and your settings will be deleted.", "¿Desinstalar StretchRes?\nYa no se iniciará con Windows y se borrarán tus ajustes.", "Удалить StretchRes?\nПрограмма больше не будет запускаться с Windows, а настройки будут удалены.", "StretchRes をアンインストールしますか？\nWindows 起動時に実行されなくなり、設定は削除されます。", "要卸载 StretchRes 吗？\n它将不再随 Windows 启动，你的设置也会被删除。" } },
+
+            // --- liste des formats
+            { "tag_native", new[] { "natif", "native", "nativa", "родное", "ネイティブ", "原生" } },
+            { "tag_pro", new[] { "étiré pro", "pro stretched", "estirada pro", "растянутое (про)", "プロ向け引き伸ばし", "职业拉伸" } },
+            { "tag_stretched", new[] { "étiré", "stretched", "estirada", "растянутое", "引き伸ばし", "拉伸" } },
+            { "to_create", new[] { "à créer dans NVIDIA", "create it in NVIDIA", "crear en NVIDIA", "создать в NVIDIA", "NVIDIA で作成が必要", "需在 NVIDIA 中创建" } },
+            { "native_item", new[] { "Natif — ne rien changer ({0} × {1})", "Native — don't change anything ({0} × {1})", "Nativa — no cambiar nada ({0} × {1})", "Родное — ничего не менять ({0} × {1})", "ネイティブ — 変更しない ({0} × {1})", "原生 — 不做更改 ({0} × {1})" } },
+            { "custom", new[] { "personnalisée", "custom", "personalizada", "своё", "カスタム", "自定义" } },
+            { "other_res", new[] { "Autre résolution…", "Other resolution…", "Otra resolución…", "Другое разрешение…", "その他の解像度…", "其他分辨率…" } },
+            { "native_short", new[] { "Natif", "Native", "Nativa", "Родное", "ネイティブ", "原生" } },
+            { "fav_remove", new[] { "Retirer des favoris", "Remove from favorites", "Quitar de favoritos", "Убрать из избранного", "お気に入りから削除", "从收藏中移除" } },
+            { "fav_add", new[] { "Ajouter aux favoris (en haut de la liste)", "Add to favorites (top of the list)", "Añadir a favoritos (arriba de la lista)", "В избранное (вверху списка)", "お気に入りに追加（リストの先頭に表示）", "加入收藏（显示在列表顶部）" } },
+            { "pill_playing", new[] { "EN JEU", "PLAYING", "JUGANDO", "В ИГРЕ", "プレイ中", "游戏中" } },
+            { "pill_off", new[] { "DÉSACTIVÉ", "OFF", "DESACTIVADO", "ВЫКЛ.", "無効", "已禁用" } },
+
+            // --- dialogues
+            { "custom_res", new[] { "Résolution personnalisée", "Custom resolution", "Resolución personalizada", "Своё разрешение", "カスタム解像度", "自定义分辨率" } },
+            { "width", new[] { "Largeur", "Width", "Ancho", "Ширина", "幅", "宽度" } },
+            { "height", new[] { "Hauteur", "Height", "Alto", "Высота", "高さ", "高度" } },
+            { "menu_browse", new[] { "Choisir le fichier .exe du jeu…", "Choose the game's .exe file…", "Elegir el archivo .exe del juego…", "Выбрать .exe-файл игры…", "ゲームの .exe ファイルを選択…", "选择游戏的 .exe 文件…" } },
+            { "menu_popular", new[] { "Jeux populaires", "Popular games", "Juegos populares", "Популярные игры", "人気のゲーム", "热门游戏" } },
+            { "menu_running", new[] { "Un programme ouvert en ce moment", "A program that's running now", "Un programa abierto ahora", "Программа, открытая сейчас", "現在開いているプログラム", "当前打开的程序" } },
+            { "none", new[] { "(aucun)", "(none)", "(ninguno)", "(нет)", "（なし）", "（无）" } },
+            { "menu_type", new[] { "Taper le nom du .exe…", "Type the .exe name…", "Escribir el nombre del .exe…", "Ввести имя .exe…", ".exe 名を入力…", "输入 .exe 名称…" } },
+            { "csgo_old", new[] { "CS:GO (ancien)", "CS:GO (legacy)", "CS:GO (antiguo)", "CS:GO (старый)", "CS:GO（旧版）", "CS:GO（旧版）" } },
+            { "browse_title", new[] { "Choisis le .exe du jeu", "Choose the game's .exe", "Elige el .exe del juego", "Выберите .exe игры", "ゲームの .exe を選択", "选择游戏的 .exe" } },
+            { "browse_filter", new[] { "Programmes (*.exe)|*.exe", "Programs (*.exe)|*.exe", "Programas (*.exe)|*.exe", "Программы (*.exe)|*.exe", "プログラム (*.exe)|*.exe", "程序 (*.exe)|*.exe" } },
+            { "type_title", new[] { "Nom du programme", "Program name", "Nombre del programa", "Имя программы", "プログラム名", "程序名称" } },
+            { "type_label", new[] { "Nom du .exe (ex : cs2.exe)", ".exe name (e.g. cs2.exe)", "Nombre del .exe (ej.: cs2.exe)", "Имя .exe (например, cs2.exe)", ".exe 名（例：cs2.exe）", ".exe 名称（例如 cs2.exe）" } },
+            { "add_btn", new[] { "Ajouter", "Add", "Añadir", "Добавить", "追加", "添加" } },
+
+            // --- icone pres de l'horloge
+            { "installed_title", new[] { "StretchRes est installé ✓", "StretchRes is installed ✓", "StretchRes está instalado ✓", "StretchRes установлен ✓", "StretchRes をインストールしました ✓", "StretchRes 已安装 ✓" } },
+            { "installed_body", new[] { "Il se lancera discrètement à chaque démarrage. Clique sur l'icône orange près de l'horloge pour choisir tes jeux.", "It will start quietly with Windows. Click the orange icon next to the clock to choose your games.", "Se iniciará discretamente con Windows. Haz clic en el icono naranja junto al reloj para elegir tus juegos.", "Программа будет тихо запускаться с Windows. Нажмите оранжевый значок у часов, чтобы выбрать игры.", "Windows 起動時にバックグラウンドで実行されます。時計の横のオレンジ色のアイコンをクリックしてゲームを選びましょう。", "它会随 Windows 在后台启动。点击时钟旁的橙色图标来选择你的游戏。" } },
+            { "menu_open", new[] { "Ouvrir StretchRes", "Open StretchRes", "Abrir StretchRes", "Открыть StretchRes", "StretchRes を開く", "打开 StretchRes" } },
+            { "menu_detect", new[] { "Détection automatique des jeux", "Automatic game detection", "Detección automática de juegos", "Автоопределение игр", "ゲームの自動検出", "自动检测游戏" } },
+            { "menu_restore", new[] { "Remettre la résolution normale", "Restore normal resolution", "Restaurar la resolución normal", "Вернуть обычное разрешение", "通常の解像度に戻す", "恢复正常分辨率" } },
+            { "menu_quit", new[] { "Quitter", "Quit", "Salir", "Выход", "終了", "退出" } },
+            { "bg_title", new[] { "StretchRes tourne en arrière-plan", "StretchRes is running in the background", "StretchRes sigue funcionando en segundo plano", "StretchRes работает в фоне", "StretchRes はバックグラウンドで動作中です", "StretchRes 正在后台运行" } },
+            { "bg_body", new[] { "Tes jeux passeront automatiquement à leur format. Clic droit sur l'icône pour quitter.", "Your games will switch to their format automatically. Right-click the icon to quit.", "Tus juegos cambiarán a su formato automáticamente. Clic derecho en el icono para salir.", "Игры будут сами переходить в свой формат. Чтобы выйти, щёлкните значок правой кнопкой.", "ゲームは自動で設定した解像度に切り替わります。終了するにはアイコンを右クリックします。", "游戏会自动切换到设定的分辨率。右键点击图标即可退出。" } },
+            { "test_native", new[] { "Ce jeu est en format natif : rien à tester.", "This game uses the native format: nothing to test.", "Este juego usa el formato nativo: no hay nada que probar.", "Для этой игры выбрано родное разрешение: тестировать нечего.", "このゲームはネイティブ解像度のため、テストするものはありません。", "此游戏使用原生分辨率，无需测试。" } },
+            { "scan_added", new[] { "{0} jeu(x) ajouté(s) à StretchRes", "{0} game(s) added to StretchRes", "{0} juego(s) añadido(s) a StretchRes", "Добавлено игр в StretchRes: {0}", "StretchRes に {0} 本のゲームを追加しました", "已向 StretchRes 添加 {0} 个游戏" } },
+            { "scan_added_body", new[] { "Choisis leur format dans la fenêtre.", "Choose their format in the window.", "Elige su formato en la ventana.", "Выберите для них формат в окне.", "ウィンドウで解像度を選んでください。", "请在窗口中选择它们的分辨率。" } },
+            { "scan_none", new[] { "Aucun nouveau jeu trouvé.\nTu peux toujours en ajouter un à la main avec « + Ajouter ».", "No new games found.\nYou can still add one manually with “+ Add”.", "No se encontraron juegos nuevos.\nPuedes añadir uno a mano con «+ Añadir».", "Новых игр не найдено.\nИгру можно добавить вручную кнопкой «+ Добавить».", "新しいゲームは見つかりませんでした。\n「+ 追加」から手動で追加できます。", "没有找到新游戏。\n你可以用“+ 添加”手动添加。" } },
+            { "st_test", new[] { "Test en cours → {0} × {1}", "Testing → {0} × {1}", "Probando → {0} × {1}", "Тест → {0} × {1}", "テスト中 → {0} × {1}", "测试中 → {0} × {1}" } },
+            { "st_bg", new[] { "{0} en arrière-plan → écran normal", "{0} in background → normal screen", "{0} en segundo plano → pantalla normal", "{0} в фоне → обычный экран", "{0} はバックグラウンド → 通常画面", "{0} 在后台 → 正常屏幕" } },
+            { "st_native", new[] { "{0} → natif", "{0} → native", "{0} → nativa", "{0} → родное", "{0} → ネイティブ", "{0} → 原生" } },
+            { "st_refused", new[] { "{0} : résolution refusée", "{0}: resolution rejected", "{0}: resolución rechazada", "{0}: разрешение отклонено", "{0}：解像度を適用できません", "{0}：分辨率被拒绝" } },
+            { "st_waiting", new[] { "En attente d'un jeu…", "Waiting for a game…", "Esperando un juego…", "Ожидание игры…", "ゲームを待機中…", "等待游戏…" } },
+            { "st_off", new[] { "Détection désactivée", "Detection off", "Detección desactivada", "Определение выключено", "検出オフ", "检测已关闭" } },
+
+            // --- erreurs
+            { "err_missing", new[] {
+                "La résolution {0} × {1} n'existe pas encore sur ta carte graphique.\n\nPour la créer : Panneau de configuration NVIDIA → Modifier la résolution → Personnaliser… → coche « Activer les résolutions non exposées par l'affichage » → Créer une résolution personnalisée → {0} × {1} → Tester → Oui. Ensuite, réessaie dans StretchRes.",
+                "The resolution {0} × {1} doesn't exist on your graphics card yet.\n\nTo create it: NVIDIA Control Panel → Change resolution → Customize… → check “Enable resolutions not exposed by the display” → Create Custom Resolution → {0} × {1} → Test → Yes. Then try again in StretchRes.",
+                "La resolución {0} × {1} aún no existe en tu tarjeta gráfica.\n\nPara crearla: Panel de control de NVIDIA → Cambiar resolución → Personalizar… → marca «Activar resoluciones no expuestas por la pantalla» → Crear resolución personalizada → {0} × {1} → Probar → Sí. Luego vuelve a intentarlo en StretchRes.",
+                "Разрешения {0} × {1} пока нет на вашей видеокарте.\n\nКак его создать: Панель управления NVIDIA → Изменение разрешения → Настройка… → отметьте «Включить режимы, не предлагаемые дисплеем» → Создать пользовательское разрешение → {0} × {1} → Тест → Да. Затем попробуйте снова в StretchRes.",
+                "解像度 {0} × {1} はまだグラフィックカードにありません。\n\n作成方法：NVIDIA コントロールパネル → 解像度の変更 → カスタマイズ… →「ディスプレイで公開されていない解像度を有効にする」にチェック → カスタム解像度の作成 → {0} × {1} → テスト → はい。その後、StretchRes でもう一度お試しください。",
+                "你的显卡上还没有 {0} × {1} 分辨率。\n\n创建方法：NVIDIA 控制面板 → 更改分辨率 → 自定义… → 勾选“启用显示器未显示的分辨率” → 创建自定义分辨率 → {0} × {1} → 测试 → 是。然后在 StretchRes 中重试。" } },
+            { "err_reboot", new[] { "Windows demande un redémarrage pour appliquer cette résolution.", "Windows needs a restart to apply this resolution.", "Windows necesita reiniciar para aplicar esta resolución.", "Чтобы применить это разрешение, нужно перезагрузить Windows.", "この解像度を適用するには Windows の再起動が必要です。", "需要重启 Windows 才能应用此分辨率。" } },
+            { "err_code", new[] { "Impossible de changer la résolution (code {0}).", "Couldn't change the resolution (code {0}).", "No se pudo cambiar la resolución (código {0}).", "Не удалось изменить разрешение (код {0}).", "解像度を変更できませんでした（コード {0}）。", "无法更改分辨率（代码 {0}）。" } },
+            { "err_close_old", new[] { "Impossible de fermer l'ancienne version de StretchRes. Quitte-la (clic droit sur l'icône → Quitter) puis relance ce fichier.", "Couldn't close the old version of StretchRes. Quit it (right-click the icon → Quit), then run this file again.", "No se pudo cerrar la versión anterior de StretchRes. Ciérrala (clic derecho en el icono → Salir) y vuelve a abrir este archivo.", "Не удалось закрыть старую версию StretchRes. Закройте её (правый щелчок по значку → Выход) и снова запустите этот файл.", "古いバージョンの StretchRes を終了できませんでした。アイコンを右クリック →「終了」で閉じてから、このファイルをもう一度実行してください。", "无法关闭旧版 StretchRes。请先退出它（右键点击图标 → 退出），然后重新运行此文件。" } },
+            { "err_install", new[] { "Installation impossible : {0}", "Installation failed: {0}", "No se pudo instalar: {0}", "Не удалось установить: {0}", "インストールできませんでした：{0}", "安装失败：{0}" } },
+        };
+    }
+
+    // Choix de la langue au premier lancement : un bouton par langue, celle de Windows en orange.
+    static class LangPicker
+    {
+        public static Form Create(string preselect, Action<string> chosen)
+        {
+            Form f = new Form();
+            f.Text = "StretchRes";
+            f.FormBorderStyle = FormBorderStyle.FixedDialog;
+            f.MaximizeBox = false; f.MinimizeBox = false;
+            f.StartPosition = FormStartPosition.CenterScreen;
+            f.ClientSize = new Size(380, 236);
+            f.BackColor = Theme.Bg; f.ForeColor = Theme.Text;
+            f.Font = new Font(L.FontName, 9.5f);
+            f.Icon = Theme.AppIcon;
+            f.Controls.Add(Theme.MakeLabel("StretchRes", 20, 12, Theme.Text, 16f, FontStyle.Bold));
+            Label sub = Theme.MakeLabel("Langue · Language · Idioma · Язык · 言語 · 语言", 22, 48, Theme.Dim, 9f, FontStyle.Regular);
+            f.Controls.Add(sub);
+            for (int i = 0; i < L.Codes.Length; i++)
+            {
+                string code = L.Codes[i];
+                Button b = Theme.MakeButton(L.Names[i], code == preselect);
+                b.Location = new Point(20 + (i % 2) * 174, 80 + (i / 2) * 48);
+                b.Size = new Size(166, 40);
+                b.Click += (s, e) => { chosen(code); f.DialogResult = DialogResult.OK; f.Close(); };
+                f.Controls.Add(b);
+                if (code == preselect) f.Shown += (s, e) => b.Focus();
+            }
+            return f;
+        }
+
+        public static string Ask(string preselect)
+        {
+            string result = preselect;
+            using (Form f = Create(preselect, c => result = c))
+            {
+                f.TopMost = true;
+                f.ShowDialog();
+            }
+            return result;
+        }
     }
 
     // ------------------------------------------------------------------ Display
@@ -351,12 +535,9 @@ namespace StretchRes
                 r = Native.ChangeDisplaySettingsEx(Device, ref d2, IntPtr.Zero, Native.CDS_FULLSCREEN, IntPtr.Zero);
             }
             if (r == 0) { IsChanged = true; return null; }
-            if (r == -2 || r == -1) return "La résolution " + w + " × " + h + " n'existe pas encore sur ta carte graphique.\n\n" +
-                "Pour la créer : Panneau de configuration NVIDIA → Modifier la résolution → Personnaliser… → " +
-                "coche « Activer les résolutions non exposées par l'affichage » → Créer une résolution personnalisée → " +
-                w + " × " + h + " → Tester → Oui. Ensuite, réessaie dans StretchRes.";
-            if (r == 1) return "Windows demande un redémarrage pour appliquer cette résolution.";
-            return "Impossible de changer la résolution (code " + r + ").";
+            if (r == -2 || r == -1) return L.F("err_missing", w, h);
+            if (r == 1) return L.T("err_reboot");
+            return L.F("err_code", r);
         }
 
         // Remet l'ecran normal meme si ce n'est pas cette instance qui l'a change.
@@ -453,6 +634,7 @@ namespace StretchRes
         public List<Game> Games = new List<Game>();
         public HashSet<string> Ignored = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         public bool Stretch = true, Detection = true, HintShown, NormalOnAltTab = true, Scanned;
+        public string Lang = ""; // vide = pas encore choisie (on demande au premier lancement)
         // resolutions favorites (en tete de liste, avec une etoile)
         public List<Size> Favs = new List<Size> { new Size(1440, 1080), new Size(1600, 1080), new Size(1280, 960) };
 
@@ -495,6 +677,7 @@ namespace StretchRes
                     else if (k == "hint") c.HintShown = v == "1";
                     else if (k == "alttab") c.NormalOnAltTab = v == "1";
                     else if (k == "scanned") c.Scanned = v == "1";
+                    else if (k == "lang") c.Lang = v.Trim();
                     else if (k == "favs")
                     {
                         c.Favs.Clear();
@@ -532,6 +715,7 @@ namespace StretchRes
                 l.Add("hint=" + (HintShown ? "1" : "0"));
                 l.Add("alttab=" + (NormalOnAltTab ? "1" : "0"));
                 l.Add("scanned=" + (Scanned ? "1" : "0"));
+                if (Lang.Length > 0) l.Add("lang=" + Lang);
                 l.Add("favs=" + string.Join(",", Favs.Select(f => f.Width + "x" + f.Height)));
                 foreach (string ig in Ignored) l.Add("ignore=" + ig);
                 foreach (Game g in Games)
@@ -873,7 +1057,7 @@ namespace StretchRes
             b.ForeColor = accent ? Color.FromArgb(20, 20, 26) : Text;
             b.FlatAppearance.BorderColor = accent ? Accent : Border;
             b.FlatAppearance.MouseOverBackColor = accent ? Color.FromArgb(255, 160, 50) : Color.FromArgb(52, 52, 66);
-            b.Font = new Font("Segoe UI", 9.5f, accent ? FontStyle.Bold : FontStyle.Regular);
+            b.Font = new Font(L.FontName, 9.5f, accent ? FontStyle.Bold : FontStyle.Regular);
             return b;
         }
 
@@ -882,7 +1066,7 @@ namespace StretchRes
             Label l = new Label();
             l.Text = text; l.AutoSize = true; l.Location = new Point(x, y);
             l.ForeColor = c; l.BackColor = Color.Transparent;
-            l.Font = new Font("Segoe UI", size, st);
+            l.Font = new Font(L.FontName, size, st);
             return l;
         }
     }
@@ -924,6 +1108,13 @@ namespace StretchRes
         public App(bool show, bool firstRun)
         {
             Cfg = Config.Load();
+            if (!L.Set(Cfg.Lang))
+            {
+                // premier lancement (ou mise a jour depuis une version sans langues) : on demande.
+                // Au demarrage discret de Windows on ne derange pas : langue de Windows en attendant.
+                if (show) { Cfg.Lang = LangPicker.Ask(L.Detect()); Cfg.Save(); L.Set(Cfg.Lang); }
+                else L.Set(L.Detect());
+            }
             form = new MainForm(this);
             IntPtr h = form.Handle; // force la creation pour BeginInvoke
 
@@ -945,8 +1136,7 @@ namespace StretchRes
             StartShowListener();
 
             if (firstRun)
-                tray.ShowBalloonTip(6000, "StretchRes est installé ✓",
-                    "Il se lancera discrètement à chaque démarrage. Clique sur l'icône orange près de l'horloge pour choisir tes jeux.", ToolTipIcon.Info);
+                tray.ShowBalloonTip(6000, L.T("installed_title"), L.T("installed_body"), ToolTipIcon.Info);
             if (show) ShowForm();
             Tick();
             // ajoute tout seul les nouveaux jeux installes : tout de suite si la fenetre est ouverte,
@@ -964,17 +1154,42 @@ namespace StretchRes
         ContextMenuStrip BuildMenu()
         {
             ContextMenuStrip m = new ContextMenuStrip();
-            ToolStripMenuItem open = new ToolStripMenuItem("Ouvrir StretchRes", null, (s, e) => ShowForm());
+            ToolStripMenuItem open = new ToolStripMenuItem(L.T("menu_open"), null, (s, e) => ShowForm());
             open.Font = new Font(open.Font, FontStyle.Bold);
             m.Items.Add(open);
             m.Items.Add(new ToolStripSeparator());
-            miDetect = new ToolStripMenuItem("Détection automatique des jeux", null, (s, e) => SetDetection(!Cfg.Detection));
+            miDetect = new ToolStripMenuItem(L.T("menu_detect"), null, (s, e) => SetDetection(!Cfg.Detection));
             miDetect.Checked = Cfg.Detection;
             m.Items.Add(miDetect);
-            m.Items.Add(new ToolStripMenuItem("Remettre la résolution normale", null, (s, e) => ForceRestore()));
+            m.Items.Add(new ToolStripMenuItem(L.T("menu_restore"), null, (s, e) => ForceRestore()));
             m.Items.Add(new ToolStripSeparator());
-            m.Items.Add(new ToolStripMenuItem("Quitter", null, (s, e) => Quit()));
+            m.Items.Add(new ToolStripMenuItem(L.T("menu_quit"), null, (s, e) => Quit()));
             return m;
+        }
+
+        // Change la langue tout de suite : la fenetre et le menu de l'icone sont reconstruits.
+        public void SetLanguage(string code)
+        {
+            if (code == L.Code || !L.Set(code)) return;
+            Cfg.Lang = code; Cfg.Save();
+            MainForm old = form;
+            old.BeginInvoke(new Action(() =>
+            {
+                Point loc = old.Location;
+                form = new MainForm(this);
+                IntPtr h = form.Handle;
+                form.StartPosition = FormStartPosition.Manual;
+                form.Location = loc;
+                form.SetScanning(scanning);
+                old.Discard = true;
+                old.Close();
+                ContextMenuStrip oldMenu = tray.ContextMenuStrip;
+                tray.ContextMenuStrip = BuildMenu();
+                if (oldMenu != null) oldMenu.Dispose();
+                lastTip = null;
+                ShowForm();
+                Tick();
+            }));
         }
 
         void StartShowListener()
@@ -1017,8 +1232,7 @@ namespace StretchRes
             if (!closeHintShown && !Cfg.HintShown)
             {
                 closeHintShown = true; Cfg.HintShown = true; Cfg.Save();
-                tray.ShowBalloonTip(4000, "StretchRes tourne en arrière-plan",
-                    "Tes jeux passeront automatiquement à leur format. Clic droit sur l'icône pour quitter.", ToolTipIcon.Info);
+                tray.ShowBalloonTip(4000, L.T("bg_title"), L.T("bg_body"), ToolTipIcon.Info);
             }
         }
 
@@ -1050,7 +1264,7 @@ namespace StretchRes
 
         public void StartTest(Game g)
         {
-            if (g.W <= 0) { MessageBox.Show(form, "Ce jeu est en format natif : rien à tester.", "StretchRes"); return; }
+            if (g.W <= 0) { MessageBox.Show(form, L.T("test_native"), "StretchRes"); return; }
             string err = Display.Apply(g.W, g.H, Cfg.Stretch);
             if (err != null) { MessageBox.Show(form, err, "StretchRes", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
             appliedName = "__test__"; appliedW = g.W; appliedH = g.H; appliedStretch = Cfg.Stretch;
@@ -1136,10 +1350,10 @@ namespace StretchRes
             form.SetScanning(false);
             form.RefreshAll();
             if (added > 0)
-                tray.ShowBalloonTip(5000, added + " jeu(x) ajouté(s) à StretchRes",
-                    string.Join(", ", names.Take(6)) + (names.Count > 6 ? "…" : "") + "\nChoisis leur format dans la fenêtre.", ToolTipIcon.Info);
+                tray.ShowBalloonTip(5000, L.F("scan_added", added),
+                    string.Join(", ", names.Take(6)) + (names.Count > 6 ? "…" : "") + "\n" + L.T("scan_added_body"), ToolTipIcon.Info);
             else if (userAsked)
-                MessageBox.Show(form, "Aucun nouveau jeu trouvé.\nTu peux toujours en ajouter un à la main avec « + Ajouter ».", "StretchRes");
+                MessageBox.Show(form, L.T("scan_none"), "StretchRes");
             if (!form.Visible) Native.TrimMemory();
         }
 
@@ -1154,7 +1368,7 @@ namespace StretchRes
             if (appliedName == "__test__")
             {
                 int left = (int)Math.Ceiling((testUntil - DateTime.Now).TotalSeconds);
-                if (left > 0) { form.SetTestCountdown(left); form.RefreshLive("Test en cours → " + appliedW + " × " + appliedH, true); return; }
+                if (left > 0) { form.SetTestCountdown(left); form.RefreshLive(L.F("st_test", appliedW, appliedH), true); return; }
                 Display.Restore(); appliedName = null; testUntil = DateTime.MinValue;
                 form.SetTestCountdown(0);
             }
@@ -1197,7 +1411,7 @@ namespace StretchRes
             if (target != null && (background || target.W <= 0))
             {
                 if (appliedName != null) { Display.Restore(); appliedName = null; }
-                status = background ? target.Name + " en arrière-plan → écran normal" : target.Name + " → natif";
+                status = background ? L.F("st_bg", target.Name) : L.F("st_native", target.Name);
                 active = !background;
             }
             else if (target != null)
@@ -1211,7 +1425,7 @@ namespace StretchRes
                 }
                 else if (failedKey == key)
                 {
-                    status = target.Name + " : résolution refusée";
+                    status = L.F("st_refused", target.Name);
                 }
                 else
                 {
@@ -1226,7 +1440,7 @@ namespace StretchRes
                     {
                         failedKey = key;
                         tray.ShowBalloonTip(6000, "StretchRes — " + target.Name, err, ToolTipIcon.Warning);
-                        status = target.Name + " : résolution refusée";
+                        status = L.F("st_refused", target.Name);
                     }
                 }
             }
@@ -1234,7 +1448,7 @@ namespace StretchRes
             {
                 failedKey = null;
                 if (appliedName != null) { Display.Restore(); appliedName = null; }
-                status = Cfg.Detection ? "En attente d'un jeu…" : "Détection désactivée";
+                status = Cfg.Detection ? L.T("st_waiting") : L.T("st_off");
             }
 
             string tip = "StretchRes — " + status;
@@ -1290,18 +1504,20 @@ namespace StretchRes
         ComboBox cmbFormat;
         CheckBox chkEnabled, chkStartup, chkStretch, chkAltTab;
         Button btnAdd, btnScan, btnRemove, btnTest, btnFav;
+        ComboBox cmbLang;
+        public bool Discard; // fenetre remplacee (changement de langue) : fermeture reelle
         ToolTip tip = new ToolTip();
         Panel right;
         bool loading;
-        Font fBold = new Font("Segoe UI", 10.5f, FontStyle.Bold);
-        Font fSmall = new Font("Segoe UI", 8.5f);
-        Font fPill = new Font("Segoe UI", 7.5f, FontStyle.Bold);
+        Font fBold = new Font(L.FontName, 10.5f, FontStyle.Bold);
+        Font fSmall = new Font(L.FontName, 8.5f);
+        Font fPill = new Font(L.FontName, 7.5f, FontStyle.Bold);
 
         static readonly string[][] Popular =
         {
             new[] { "Fortnite", "FortniteClient-Win64-Shipping.exe" },
             new[] { "Counter-Strike 2", "cs2.exe" },
-            new[] { "CS:GO (ancien)", "csgo.exe" },
+            new[] { "@csgo_old", "csgo.exe" }, // "@cle" = nom traduit
             new[] { "Valorant", "VALORANT-Win64-Shipping.exe" },
             new[] { "Apex Legends", "r5apex.exe" },
             new[] { "Apex Legends (DX12)", "r5apex_dx12.exe" },
@@ -1314,13 +1530,13 @@ namespace StretchRes
         public MainForm(App app)
         {
             this.app = app;
-            Text = "StretchRes — résolutions étirées pour tes jeux";
+            Text = L.T("title");
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             ClientSize = new Size(760, 540);
             BackColor = Theme.Bg;
             ForeColor = Theme.Text;
-            Font = new Font("Segoe UI", 9.5f);
+            Font = new Font(L.FontName, 9.5f);
             StartPosition = FormStartPosition.CenterScreen;
             Icon = Theme.AppIcon;
             Build();
@@ -1329,18 +1545,41 @@ namespace StretchRes
         void Build()
         {
             Controls.Add(Theme.MakeLabel("StretchRes", 20, 14, Theme.Text, 20f, FontStyle.Bold));
-            Controls.Add(Theme.MakeLabel("Tes jeux passent tout seuls au bon format, puis l'écran revient à la normale.", 23, 56, Theme.Dim, 9f, FontStyle.Regular));
+            Label subtitle = Theme.MakeLabel(L.T("subtitle"), 23, 56, Theme.Dim, 9f, FontStyle.Regular);
+            subtitle.AutoSize = false; subtitle.Size = new Size(585, 22); subtitle.AutoEllipsis = true;
+            Controls.Add(subtitle);
 
             lblStatus = new Label();
-            lblStatus.AutoSize = false; lblStatus.Size = new Size(300, 26); lblStatus.Location = new Point(440, 24);
-            lblStatus.TextAlign = ContentAlignment.MiddleRight;
-            lblStatus.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
+            lblStatus.AutoSize = false; lblStatus.Size = new Size(370, 26); lblStatus.Location = new Point(370, 18);
+            lblStatus.TextAlign = ContentAlignment.MiddleRight; lblStatus.AutoEllipsis = true;
+            lblStatus.Font = new Font(L.FontName, 9.5f, FontStyle.Bold);
             Controls.Add(lblStatus);
+
+            // --- langue (modifiable a tout moment)
+            cmbLang = new ComboBox();
+            cmbLang.DropDownStyle = ComboBoxStyle.DropDownList; cmbLang.FlatStyle = FlatStyle.Flat;
+            cmbLang.BackColor = Theme.Panel2; cmbLang.ForeColor = Theme.Text;
+            cmbLang.DrawMode = DrawMode.OwnerDrawFixed; cmbLang.ItemHeight = 20;
+            cmbLang.DrawItem += (s, e) =>
+            {
+                if (e.Index < 0) return;
+                bool sel = (e.State & DrawItemState.Selected) != 0 && (e.State & DrawItemState.ComboBoxEdit) == 0;
+                using (SolidBrush b = new SolidBrush(sel ? Color.FromArgb(70, 50, 20) : Theme.Panel2)) e.Graphics.FillRectangle(b, e.Bounds);
+                TextRenderer.DrawText(e.Graphics, L.Names[e.Index], cmbLang.Font,
+                    new Rectangle(e.Bounds.X + 6, e.Bounds.Y, e.Bounds.Width - 6, e.Bounds.Height), Theme.Text,
+                    TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
+            };
+            cmbLang.Items.AddRange(L.Names);
+            cmbLang.SelectedIndex = L.Index;
+            cmbLang.Location = new Point(620, 52); cmbLang.Width = 120;
+            cmbLang.SelectionChangeCommitted += (s, e) => app.SetLanguage(L.Codes[cmbLang.SelectedIndex]);
+            tip.SetToolTip(cmbLang, L.T("lang"));
+            Controls.Add(cmbLang);
 
             Controls.Add(Line(20, 86, 720));
 
             // --- liste des jeux
-            lblGames = Theme.MakeLabel("MES JEUX", 20, 102, Theme.Dim, 8.5f, FontStyle.Bold);
+            lblGames = Theme.MakeLabel(L.T("my_games"), 20, 102, Theme.Dim, 8.5f, FontStyle.Bold);
             Controls.Add(lblGames);
 
             // --- recherche
@@ -1350,7 +1589,7 @@ namespace StretchRes
             searchBox.Controls.Add(Theme.MakeLabel("⌕", 6, 3, Theme.Dim, 12f, FontStyle.Regular));
             txtSearch = new TextBox();
             txtSearch.BorderStyle = BorderStyle.None; txtSearch.BackColor = Theme.Panel2; txtSearch.ForeColor = Theme.Text;
-            txtSearch.Font = new Font("Segoe UI", 10f);
+            txtSearch.Font = new Font(L.FontName, 10f);
             txtSearch.Location = new Point(28, 6); txtSearch.Width = 278;
             txtSearch.TextChanged += (s, e) => { btnClear.Visible = txtSearch.Text.Length > 0; RebuildList(Selected()); };
             txtSearch.KeyDown += (s, e) =>
@@ -1362,7 +1601,7 @@ namespace StretchRes
                     e.SuppressKeyPress = true;
                 }
             };
-            txtSearch.HandleCreated += (s, e) => Native.SendMessage(txtSearch.Handle, 0x1501, (IntPtr)1, "Rechercher un jeu…  (Ctrl+F)");
+            txtSearch.HandleCreated += (s, e) => Native.SendMessage(txtSearch.Handle, 0x1501, (IntPtr)1, L.T("search"));
             searchBox.Controls.Add(txtSearch);
             btnClear = Theme.MakeLabel("✕", 310, 5, Theme.Dim, 10f, FontStyle.Regular);
             btnClear.Cursor = Cursors.Hand; btnClear.Visible = false;
@@ -1378,19 +1617,25 @@ namespace StretchRes
             list.SelectedIndexChanged += (s, e) => LoadSelected();
             Controls.Add(list);
 
-            lblEmpty = Theme.MakeLabel("Aucun jeu pour l'instant.\nClique sur « + Ajouter un jeu ».", 0, 0, Theme.Dim, 9.5f, FontStyle.Regular);
+            lblEmpty = Theme.MakeLabel(L.T("empty"), 0, 0, Theme.Dim, 9.5f, FontStyle.Regular);
             lblEmpty.AutoSize = false; lblEmpty.Size = new Size(334, 60); lblEmpty.TextAlign = ContentAlignment.MiddleCenter;
             lblEmpty.Location = new Point(20, 250); lblEmpty.BackColor = Theme.Panel;
             Controls.Add(lblEmpty);
             lblEmpty.BringToFront();
 
-            btnScan = Theme.MakeButton("⟳  Scanner mes jeux", true);
-            btnScan.Location = new Point(20, 436); btnScan.Size = new Size(160, 36);
+            // largeur des 3 boutons selon la longueur des textes dans la langue choisie (334 px au total)
+            btnScan = Theme.MakeButton(L.T("scan"), true);
+            btnAdd = Theme.MakeButton(L.T("add"), false);
+            btnRemove = Theme.MakeButton(L.T("remove"), false);
+            int wAdd = Math.Max(78, TextRenderer.MeasureText(btnAdd.Text, btnAdd.Font).Width + 22);
+            int wRem = Math.Max(70, TextRenderer.MeasureText(btnRemove.Text, btnRemove.Font).Width + 22);
+            int wScan = 334 - wAdd - wRem - 12;
+
+            btnScan.Location = new Point(20, 436); btnScan.Size = new Size(wScan, 36);
             btnScan.Click += (s, e) => app.ScanGames(true);
             Controls.Add(btnScan);
 
-            btnAdd = Theme.MakeButton("+ Ajouter", false);
-            btnAdd.Location = new Point(186, 436); btnAdd.Size = new Size(92, 36);
+            btnAdd.Location = new Point(20 + wScan + 6, 436); btnAdd.Size = new Size(wAdd, 36);
             btnAdd.Click += (s, e) =>
             {
                 ContextMenuStrip m = BuildAddMenu();
@@ -1399,8 +1644,7 @@ namespace StretchRes
             };
             Controls.Add(btnAdd);
 
-            btnRemove = Theme.MakeButton("Retirer", false);
-            btnRemove.Location = new Point(284, 436); btnRemove.Size = new Size(70, 36);
+            btnRemove.Location = new Point(354 - wRem, 436); btnRemove.Size = new Size(wRem, 36);
             btnRemove.Click += (s, e) => RemoveSelected();
             Controls.Add(btnRemove);
 
@@ -1409,8 +1653,8 @@ namespace StretchRes
             right.Location = new Point(372, 102); right.Size = new Size(368, 370); right.BackColor = Theme.Panel;
             Controls.Add(right);
 
-            right.Controls.Add(Theme.MakeLabel("RÉGLAGES DU JEU", 16, 14, Theme.Dim, 8.5f, FontStyle.Bold));
-            right.Controls.Add(Theme.MakeLabel("Nom", 16, 42, Theme.Text, 9f, FontStyle.Regular));
+            right.Controls.Add(Theme.MakeLabel(L.T("settings"), 16, 14, Theme.Dim, 8.5f, FontStyle.Bold));
+            right.Controls.Add(Theme.MakeLabel(L.T("name"), 16, 42, Theme.Text, 9f, FontStyle.Regular));
             txtName = new TextBox();
             txtName.Location = new Point(16, 62); txtName.Size = new Size(336, 26);
             txtName.BackColor = Theme.Panel2; txtName.ForeColor = Theme.Text; txtName.BorderStyle = BorderStyle.FixedSingle;
@@ -1421,11 +1665,11 @@ namespace StretchRes
             };
             right.Controls.Add(txtName);
 
-            right.Controls.Add(Theme.MakeLabel("Programme surveillé", 16, 98, Theme.Text, 9f, FontStyle.Regular));
+            right.Controls.Add(Theme.MakeLabel(L.T("watched"), 16, 98, Theme.Text, 9f, FontStyle.Regular));
             lblExe = Theme.MakeLabel("", 16, 118, Theme.Dim, 9f, FontStyle.Regular);
             right.Controls.Add(lblExe);
 
-            right.Controls.Add(Theme.MakeLabel("Format quand le jeu est lancé", 16, 148, Theme.Text, 9f, FontStyle.Regular));
+            right.Controls.Add(Theme.MakeLabel(L.T("format"), 16, 148, Theme.Text, 9f, FontStyle.Regular));
             cmbFormat = new ComboBox();
             cmbFormat.Location = new Point(16, 168); cmbFormat.Size = new Size(296, 28);
             cmbFormat.DropDownStyle = ComboBoxStyle.DropDownList; cmbFormat.FlatStyle = FlatStyle.Flat;
@@ -1443,7 +1687,7 @@ namespace StretchRes
             right.Controls.Add(btnFav);
 
             chkEnabled = new CheckBox();
-            chkEnabled.Text = "Activé pour ce jeu"; chkEnabled.AutoSize = true; chkEnabled.Location = new Point(16, 212);
+            chkEnabled.Text = L.T("enabled"); chkEnabled.AutoSize = true; chkEnabled.Location = new Point(16, 212);
             chkEnabled.CheckedChanged += (s, e) =>
             {
                 Game g = Selected(); if (loading || g == null) return;
@@ -1451,8 +1695,8 @@ namespace StretchRes
             };
             right.Controls.Add(chkEnabled);
 
-            btnTest = Theme.MakeButton("Tester 10 secondes", false);
-            btnTest.Location = new Point(16, 244); btnTest.Size = new Size(200, 34);
+            btnTest = Theme.MakeButton(L.T("test"), false);
+            btnTest.Location = new Point(16, 244); btnTest.Size = new Size(TestWidth(btnTest.Text), 34);
             btnTest.Click += (s, e) =>
             {
                 Game g = Selected(); if (g == null) return;
@@ -1460,18 +1704,17 @@ namespace StretchRes
             };
             right.Controls.Add(btnTest);
 
-            Label hint = Theme.MakeLabel(
-                "Dans le jeu : mode « Plein écran fenêtré ». StretchRes demande à la carte graphique d'étirer l'image. " +
-                "S'il reste des bandes noires : Panneau NVIDIA → Ajuster la taille et la position du bureau → " +
-                "« Plein écran », mise à l'échelle sur « GPU », et décoche « Remplacer le mode défini par les jeux ».",
-                16, 288, Theme.Dim, 8.5f, FontStyle.Regular);
-            hint.AutoSize = false; hint.Size = new Size(336, 78);
+            Label hint = Theme.MakeLabel(L.T("hint"), 16, 288, Theme.Dim, 8.5f, FontStyle.Regular);
+            hint.AutoSize = false; hint.Size = new Size(336, 80);
+            // texte plus long dans certaines langues : on reduit un peu la police plutot que de le couper
+            for (float sz = 8.5f; sz > 7f && TextRenderer.MeasureText(hint.Text, hint.Font, new Size(336, 0), TextFormatFlags.WordBreak).Height > 80; sz -= 0.25f)
+                hint.Font = new Font(L.FontName, sz - 0.25f);
             right.Controls.Add(hint);
 
-            // --- bas
+            // --- bas : les cases se suivent selon la longueur des textes
             Controls.Add(Line(20, 488, 720));
             chkStartup = new CheckBox();
-            chkStartup.Text = "Lancer avec Windows"; chkStartup.AutoSize = true; chkStartup.Location = new Point(20, 504);
+            chkStartup.Text = L.T("startup"); chkStartup.AutoSize = true; chkStartup.Location = new Point(20, 504);
             chkStartup.CheckedChanged += (s, e) =>
             {
                 if (loading) return;
@@ -1480,25 +1723,25 @@ namespace StretchRes
             Controls.Add(chkStartup);
 
             chkStretch = new CheckBox();
-            chkStretch.Text = "Étirer l'image"; chkStretch.AutoSize = true; chkStretch.Location = new Point(186, 504);
+            chkStretch.Text = L.T("stretch"); chkStretch.AutoSize = true; chkStretch.Location = new Point(20 + chkStartup.PreferredSize.Width + 18, 504);
             chkStretch.CheckedChanged += (s, e) => { if (loading) return; cfg.Stretch = chkStretch.Checked; cfg.Save(); };
             Controls.Add(chkStretch);
 
             chkAltTab = new CheckBox();
-            chkAltTab.Text = "Écran normal pendant Alt+Tab"; chkAltTab.AutoSize = true; chkAltTab.Location = new Point(316, 504);
+            chkAltTab.Text = L.T("alttab"); chkAltTab.AutoSize = true; chkAltTab.Location = new Point(chkStretch.Left + chkStretch.PreferredSize.Width + 18, 504);
             chkAltTab.CheckedChanged += (s, e) => { if (loading) return; cfg.NormalOnAltTab = chkAltTab.Checked; cfg.Save(); };
             Controls.Add(chkAltTab);
 
             LinkLabel lnk = new LinkLabel();
-            lnk.Text = "Désinstaller"; lnk.AutoSize = true; lnk.Location = new Point(660, 506);
+            lnk.Text = L.T("uninstall"); lnk.AutoSize = true; lnk.Location = new Point(660, 506);
             lnk.LinkColor = Theme.Dim; lnk.ActiveLinkColor = Theme.Accent; lnk.LinkBehavior = LinkBehavior.HoverUnderline;
             lnk.LinkClicked += (s, e) =>
             {
-                if (MessageBox.Show(this, "Désinstaller StretchRes ?\nIl ne se lancera plus au démarrage et tes réglages seront supprimés.",
-                    "StretchRes", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                if (MessageBox.Show(this, L.T("uninstall_q"), "StretchRes", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                     app.Uninstall();
             };
             Controls.Add(lnk);
+            lnk.Left = 740 - lnk.Width; // aligne a droite une fois la police de la fenetre appliquee
         }
 
         static Panel Line(int x, int y, int w)
@@ -1520,7 +1763,7 @@ namespace StretchRes
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            if (!app.Exiting && e.CloseReason == CloseReason.UserClosing)
+            if (!app.Exiting && !Discard && e.CloseReason == CloseReason.UserClosing)
             {
                 e.Cancel = true;
                 Hide();
@@ -1565,8 +1808,8 @@ namespace StretchRes
             int idx = keep != null ? view.IndexOf(keep) : -1;
             if (idx < 0 && view.Count > 0) idx = 0;
             list.SelectedIndex = idx;
-            lblGames.Text = q.Length > 0 ? "MES JEUX  (" + view.Count + " / " + cfg.Games.Count + ")" : "MES JEUX  (" + cfg.Games.Count + ")";
-            lblEmpty.Text = cfg.Games.Count == 0 ? "Aucun jeu pour l'instant.\nClique sur « Scanner mes jeux »." : "Aucun jeu ne correspond à « " + q + " ».";
+            lblGames.Text = L.T("my_games") + (q.Length > 0 ? "  (" + view.Count + " / " + cfg.Games.Count + ")" : "  (" + cfg.Games.Count + ")");
+            lblEmpty.Text = cfg.Games.Count == 0 ? L.T("empty") : L.F("no_match", q);
             lastLiveSig = null;
             loading = wasLoading;
             LoadSelected();
@@ -1612,9 +1855,9 @@ namespace StretchRes
         {
             string r = Display.Ratio(w, h);
             string tag = "";
-            if (w == native.Width && h == native.Height) tag = "   · natif";
-            else if (r == "4:3") tag = "   · étiré pro";
-            else if (native.Height > 0 && (double)w / h < (double)native.Width / native.Height - 0.05) tag = "   · étiré";
+            if (w == native.Width && h == native.Height) tag = "   · " + L.T("tag_native");
+            else if (r == "4:3") tag = "   · " + L.T("tag_pro");
+            else if (native.Height > 0 && (double)w / h < (double)native.Width / native.Height - 0.05) tag = "   · " + L.T("tag_stretched");
             return w + " × " + h + "    " + r + tag;
         }
 
@@ -1630,12 +1873,12 @@ namespace StretchRes
             {
                 if (!listed.Add(f.Width * 100000L + f.Height)) continue;
                 bool exists = modes.Any(m => m.W == f.Width && m.H == f.Height);
-                string txt = "★  " + ModeLabel(f.Width, f.Height) + (exists ? "" : "   · à créer dans NVIDIA");
+                string txt = "★  " + ModeLabel(f.Width, f.Height) + (exists ? "" : "   · " + L.T("to_create"));
                 int idx = cmbFormat.Items.Add(new FormatItem { W = f.Width, H = f.Height, Fav = true, Text = txt });
                 if (f.Width == g.W && f.Height == g.H) selIndex = idx;
             }
             // 2) natif
-            int nat = cmbFormat.Items.Add(new FormatItem { W = 0, H = 0, Text = "Natif — ne rien changer (" + native.Width + " × " + native.Height + ")" });
+            int nat = cmbFormat.Items.Add(new FormatItem { W = 0, H = 0, Text = L.F("native_item", native.Width, native.Height) });
             if (g.W <= 0) selIndex = nat;
             // 3) toutes les autres
             List<Mode> sorted = modes
@@ -1647,8 +1890,8 @@ namespace StretchRes
                 if (m.W == g.W && m.H == g.H) selIndex = idx;
             }
             if (selIndex < 0)
-                selIndex = cmbFormat.Items.Add(new FormatItem { W = g.W, H = g.H, Text = g.W + " × " + g.H + "    " + Display.Ratio(g.W, g.H) + "   · personnalisée" });
-            cmbFormat.Items.Add(new FormatItem { W = -1, H = -1, Text = "Autre résolution…" });
+                selIndex = cmbFormat.Items.Add(new FormatItem { W = g.W, H = g.H, Text = g.W + " × " + g.H + "    " + Display.Ratio(g.W, g.H) + "   · " + L.T("custom") });
+            cmbFormat.Items.Add(new FormatItem { W = -1, H = -1, Text = L.T("other_res") });
             cmbFormat.SelectedIndex = selIndex;
             cmbFormat.EndUpdate();
             UpdateFavButton();
@@ -1662,7 +1905,7 @@ namespace StretchRes
             btnFav.Enabled = can;
             btnFav.Text = fav ? "★" : "☆";
             btnFav.ForeColor = fav ? Theme.Gold : Theme.Dim;
-            tip.SetToolTip(btnFav, fav ? "Retirer des favoris" : "Ajouter aux favoris (en haut de la liste)");
+            tip.SetToolTip(btnFav, fav ? L.T("fav_remove") : L.T("fav_add"));
         }
 
         void ToggleFav()
@@ -1696,13 +1939,13 @@ namespace StretchRes
         {
             using (Form f = new Form())
             {
-                f.Text = "Résolution personnalisée"; f.FormBorderStyle = FormBorderStyle.FixedDialog;
+                f.Text = L.T("custom_res"); f.FormBorderStyle = FormBorderStyle.FixedDialog;
                 f.MaximizeBox = false; f.MinimizeBox = false; f.StartPosition = FormStartPosition.CenterParent;
                 f.ClientSize = new Size(300, 130); f.BackColor = Theme.Bg; f.ForeColor = Theme.Text; f.Font = Font; f.ShowInTaskbar = false;
                 NumericUpDown nw = new NumericUpDown { Minimum = 640, Maximum = 7680, Value = Math.Max(640, Math.Min(7680, w)), Location = new Point(20, 34), Width = 110 };
                 NumericUpDown nh = new NumericUpDown { Minimum = 480, Maximum = 4320, Value = Math.Max(480, Math.Min(4320, h)), Location = new Point(170, 34), Width = 110 };
-                f.Controls.Add(Theme.MakeLabel("Largeur", 20, 12, Theme.Dim, 9f, FontStyle.Regular));
-                f.Controls.Add(Theme.MakeLabel("Hauteur", 170, 12, Theme.Dim, 9f, FontStyle.Regular));
+                f.Controls.Add(Theme.MakeLabel(L.T("width"), 20, 12, Theme.Dim, 9f, FontStyle.Regular));
+                f.Controls.Add(Theme.MakeLabel(L.T("height"), 170, 12, Theme.Dim, 9f, FontStyle.Regular));
                 f.Controls.Add(Theme.MakeLabel("×", 142, 36, Theme.Dim, 10f, FontStyle.Regular));
                 f.Controls.Add(nw); f.Controls.Add(nh);
                 Button ok = Theme.MakeButton("OK", true); ok.Location = new Point(180, 80); ok.Size = new Size(100, 32); ok.DialogResult = DialogResult.OK;
@@ -1752,17 +1995,17 @@ namespace StretchRes
         ContextMenuStrip BuildAddMenu()
         {
             ContextMenuStrip m = new ContextMenuStrip();
-            m.Items.Add(new ToolStripMenuItem("Choisir le fichier .exe du jeu…", null, (s, e) => BrowseExe()));
+            m.Items.Add(new ToolStripMenuItem(L.T("menu_browse"), null, (s, e) => BrowseExe()));
 
-            ToolStripMenuItem pop = new ToolStripMenuItem("Jeux populaires");
+            ToolStripMenuItem pop = new ToolStripMenuItem(L.T("menu_popular"));
             foreach (string[] p in Popular)
             {
-                string n = p[0], x = p[1];
+                string n = p[0].StartsWith("@") ? L.T(p[0].Substring(1)) : p[0], x = p[1];
                 pop.DropDownItems.Add(new ToolStripMenuItem(n, null, (s, e) => AddGame(n, x)));
             }
             m.Items.Add(pop);
 
-            ToolStripMenuItem run = new ToolStripMenuItem("Un programme ouvert en ce moment");
+            ToolStripMenuItem run = new ToolStripMenuItem(L.T("menu_running"));
             List<KeyValuePair<string, string>> procs = new List<KeyValuePair<string, string>>();
             HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             int self = Process.GetCurrentProcess().Id;
@@ -1783,11 +2026,11 @@ namespace StretchRes
                 string exe = kv.Value;
                 run.DropDownItems.Add(new ToolStripMenuItem(title + "   (" + exe + ")", null, (s, e) => AddGame(title, exe)));
             }
-            if (run.DropDownItems.Count == 0) run.DropDownItems.Add(new ToolStripMenuItem("(aucun)") { Enabled = false });
+            if (run.DropDownItems.Count == 0) run.DropDownItems.Add(new ToolStripMenuItem(L.T("none")) { Enabled = false });
             m.Items.Add(run);
 
             m.Items.Add(new ToolStripSeparator());
-            m.Items.Add(new ToolStripMenuItem("Taper le nom du .exe…", null, (s, e) => TypeExe()));
+            m.Items.Add(new ToolStripMenuItem(L.T("menu_type"), null, (s, e) => TypeExe()));
             return m;
         }
 
@@ -1795,8 +2038,8 @@ namespace StretchRes
         {
             using (OpenFileDialog d = new OpenFileDialog())
             {
-                d.Title = "Choisis le .exe du jeu";
-                d.Filter = "Programmes (*.exe)|*.exe";
+                d.Title = L.T("browse_title");
+                d.Filter = L.T("browse_filter");
                 if (d.ShowDialog(this) != DialogResult.OK) return;
                 string name = null;
                 try
@@ -1813,13 +2056,13 @@ namespace StretchRes
         {
             using (Form f = new Form())
             {
-                f.Text = "Nom du programme"; f.FormBorderStyle = FormBorderStyle.FixedDialog;
+                f.Text = L.T("type_title"); f.FormBorderStyle = FormBorderStyle.FixedDialog;
                 f.MaximizeBox = false; f.MinimizeBox = false; f.StartPosition = FormStartPosition.CenterParent;
                 f.ClientSize = new Size(360, 120); f.BackColor = Theme.Bg; f.ForeColor = Theme.Text; f.Font = Font; f.ShowInTaskbar = false;
-                f.Controls.Add(Theme.MakeLabel("Nom du .exe (ex : cs2.exe)", 20, 12, Theme.Dim, 9f, FontStyle.Regular));
+                f.Controls.Add(Theme.MakeLabel(L.T("type_label"), 20, 12, Theme.Dim, 9f, FontStyle.Regular));
                 TextBox t = new TextBox { Location = new Point(20, 36), Width = 320 };
                 f.Controls.Add(t);
-                Button ok = Theme.MakeButton("Ajouter", true); ok.Location = new Point(240, 74); ok.Size = new Size(100, 32); ok.DialogResult = DialogResult.OK;
+                Button ok = Theme.MakeButton(L.T("add_btn"), true); ok.Location = new Point(240, 74); ok.Size = new Size(100, 32); ok.DialogResult = DialogResult.OK;
                 f.Controls.Add(ok); f.AcceptButton = ok;
                 if (f.ShowDialog(this) == DialogResult.OK && t.Text.Trim().Length > 0) AddGame(null, t.Text);
             }
@@ -1845,18 +2088,24 @@ namespace StretchRes
         public void SetScanning(bool on)
         {
             btnScan.Enabled = !on;
-            btnScan.Text = on ? "Scan en cours…" : "⟳  Scanner mes jeux";
+            btnScan.Text = on ? L.T("scanning") : L.T("scan");
         }
 
         public void SetTestCountdown(int seconds)
         {
-            btnTest.Text = seconds > 0 ? "Retour dans " + seconds + " s (arrêter)" : "Tester 10 secondes";
+            btnTest.Text = seconds > 0 ? L.F("test_back", seconds) : L.T("test");
+            btnTest.Width = TestWidth(btnTest.Text);
+        }
+
+        int TestWidth(string text)
+        {
+            return Math.Min(336, Math.Max(200, TextRenderer.MeasureText(text, btnTest.Font).Width + 30));
         }
 
         // ---------- dessin
         string FormatText(Game g)
         {
-            if (g.W <= 0) return "Natif";
+            if (g.W <= 0) return L.T("native_short");
             return (cfg.IsFav(g.W, g.H) ? "★ " : "") + g.W + " × " + g.H + "  (" + Display.Ratio(g.W, g.H) + ")";
         }
 
@@ -1872,7 +2121,7 @@ namespace StretchRes
             if (sel) using (SolidBrush b = new SolidBrush(Theme.Accent)) gr.FillRectangle(b, r.X, r.Y + 8, 3, r.Height - 16);
 
             bool running = app.IsRunning(g);
-            string pill = running ? "EN JEU" : (!g.Enabled ? "DÉSACTIVÉ" : null);
+            string pill = running ? L.T("pill_playing") : (!g.Enabled ? L.T("pill_off") : null);
             int pillW = 0;
             if (pill != null)
             {
@@ -1923,6 +2172,7 @@ namespace StretchRes
             List<string> a = new List<string>(args);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            if (!L.Set(Config.Load().Lang)) L.Set(L.Detect());
 
             if (a.Contains("--selftest")) { SelfTest(a); return; }
             if (a.Contains("--snap"))
@@ -1946,8 +2196,7 @@ namespace StretchRes
                 // Mise a jour : on ferme la version installee qui tourne, puis on la remplace.
                 if (!CloseRunningInstance(mutex))
                 {
-                    MessageBox.Show("Impossible de fermer l'ancienne version de StretchRes. Quitte-la (clic droit sur l'icône → Quitter) puis relance ce fichier.",
-                        "StretchRes", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(L.T("err_close_old"), "StretchRes", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
             }
@@ -1965,7 +2214,7 @@ namespace StretchRes
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Installation impossible : " + ex.Message, "StretchRes", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(L.F("err_install", ex.Message), "StretchRes", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
                 mutex.ReleaseMutex();
@@ -2040,9 +2289,26 @@ namespace StretchRes
         }
 
         // Capture la fenetre (hors ecran) avec des jeux d'exemple, sans rien enregistrer.
+        // --lang xx : dans une langue donnee ; --picker : capture la fenetre de choix de langue.
         static void Snap(List<string> a)
         {
             Config.NoSave = true;
+            string lg = ArgAfter(a, "--lang");
+            if (lg != null) L.Set(lg);
+            if (a.Contains("--picker"))
+            {
+                using (Form p = LangPicker.Create(L.Code, code => { }))
+                {
+                    p.StartPosition = FormStartPosition.Manual; p.Location = new Point(-5000, -5000); p.ShowInTaskbar = false;
+                    p.Show(); Application.DoEvents();
+                    using (Bitmap bmp = new Bitmap(p.Width, p.Height))
+                    {
+                        p.DrawToBitmap(bmp, new Rectangle(0, 0, bmp.Width, bmp.Height));
+                        bmp.Save(ArgAfter(a, "--snap") ?? "snap.png", System.Drawing.Imaging.ImageFormat.Png);
+                    }
+                }
+                return;
+            }
             Config c = new Config();
             c.Games.Add(new Game { Name = "Fortnite", Exe = "FortniteClient-Win64-Shipping.exe", W = 1440, H = 1080 });
             c.Games.Add(new Game { Name = "Counter-Strike 2", Exe = "cs2.exe", W = 1280, H = 960 });
