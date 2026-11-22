@@ -333,7 +333,7 @@ namespace StretchRes
             f.StartPosition = FormStartPosition.CenterScreen;
             f.ClientSize = new Size(380, 236);
             f.BackColor = Theme.Bg; f.ForeColor = Theme.Text;
-            f.Font = new Font(L.FontName, 9.5f);
+            f.Font = Theme.UI(9.5f);
             f.Icon = Theme.AppIcon;
             f.Controls.Add(Theme.MakeLabel("StretchRes", 20, 12, Theme.Text, 16f, FontStyle.Bold));
             Label sub = Theme.MakeLabel("Langue · Language · Idioma · Язык · 言語 · 语言", 22, 48, Theme.Dim, 9f, FontStyle.Regular);
@@ -1047,6 +1047,18 @@ namespace StretchRes
             return p;
         }
 
+        // Polices partagees : une seule instance par (police, taille, style), jamais recreee.
+        // Evite d'empiler des polices a chaque reconstruction de la fenetre (changement de langue).
+        static readonly Dictionary<string, Font> fonts = new Dictionary<string, Font>();
+        public static Font GetFont(string name, float size, FontStyle style)
+        {
+            string key = name + "|" + size.ToString(System.Globalization.CultureInfo.InvariantCulture) + "|" + (int)style;
+            Font f;
+            if (!fonts.TryGetValue(key, out f)) { f = new Font(name, size, style); fonts[key] = f; }
+            return f;
+        }
+        public static Font UI(float size, FontStyle style = FontStyle.Regular) { return GetFont(L.FontName, size, style); }
+
         public static Button MakeButton(string text, bool accent)
         {
             Button b = new Button();
@@ -1057,7 +1069,7 @@ namespace StretchRes
             b.ForeColor = accent ? Color.FromArgb(20, 20, 26) : Text;
             b.FlatAppearance.BorderColor = accent ? Accent : Border;
             b.FlatAppearance.MouseOverBackColor = accent ? Color.FromArgb(255, 160, 50) : Color.FromArgb(52, 52, 66);
-            b.Font = new Font(L.FontName, 9.5f, accent ? FontStyle.Bold : FontStyle.Regular);
+            b.Font = Theme.UI(9.5f, accent ? FontStyle.Bold : FontStyle.Regular);
             return b;
         }
 
@@ -1066,7 +1078,7 @@ namespace StretchRes
             Label l = new Label();
             l.Text = text; l.AutoSize = true; l.Location = new Point(x, y);
             l.ForeColor = c; l.BackColor = Color.Transparent;
-            l.Font = new Font(L.FontName, size, st);
+            l.Font = Theme.UI(size, st);
             return l;
         }
     }
@@ -1155,7 +1167,7 @@ namespace StretchRes
         {
             ContextMenuStrip m = new ContextMenuStrip();
             ToolStripMenuItem open = new ToolStripMenuItem(L.T("menu_open"), null, (s, e) => ShowForm());
-            open.Font = new Font(open.Font, FontStyle.Bold);
+            open.Font = Theme.GetFont(open.Font.Name, open.Font.Size, FontStyle.Bold);
             m.Items.Add(open);
             m.Items.Add(new ToolStripSeparator());
             miDetect = new ToolStripMenuItem(L.T("menu_detect"), null, (s, e) => SetDetection(!Cfg.Detection));
@@ -1509,9 +1521,9 @@ namespace StretchRes
         ToolTip tip = new ToolTip();
         Panel right;
         bool loading;
-        Font fBold = new Font(L.FontName, 10.5f, FontStyle.Bold);
-        Font fSmall = new Font(L.FontName, 8.5f);
-        Font fPill = new Font(L.FontName, 7.5f, FontStyle.Bold);
+        Font fBold = Theme.UI(10.5f, FontStyle.Bold);
+        Font fSmall = Theme.UI(8.5f);
+        Font fPill = Theme.UI(7.5f, FontStyle.Bold);
 
         static readonly string[][] Popular =
         {
@@ -1536,7 +1548,7 @@ namespace StretchRes
             ClientSize = new Size(760, 540);
             BackColor = Theme.Bg;
             ForeColor = Theme.Text;
-            Font = new Font(L.FontName, 9.5f);
+            Font = Theme.UI(9.5f);
             StartPosition = FormStartPosition.CenterScreen;
             Icon = Theme.AppIcon;
             Build();
@@ -1552,7 +1564,7 @@ namespace StretchRes
             lblStatus = new Label();
             lblStatus.AutoSize = false; lblStatus.Size = new Size(370, 26); lblStatus.Location = new Point(370, 18);
             lblStatus.TextAlign = ContentAlignment.MiddleRight; lblStatus.AutoEllipsis = true;
-            lblStatus.Font = new Font(L.FontName, 9.5f, FontStyle.Bold);
+            lblStatus.Font = Theme.UI(9.5f, FontStyle.Bold);
             Controls.Add(lblStatus);
 
             // --- langue (modifiable a tout moment)
@@ -1589,7 +1601,7 @@ namespace StretchRes
             searchBox.Controls.Add(Theme.MakeLabel("⌕", 6, 3, Theme.Dim, 12f, FontStyle.Regular));
             txtSearch = new TextBox();
             txtSearch.BorderStyle = BorderStyle.None; txtSearch.BackColor = Theme.Panel2; txtSearch.ForeColor = Theme.Text;
-            txtSearch.Font = new Font(L.FontName, 10f);
+            txtSearch.Font = Theme.UI(10f);
             txtSearch.Location = new Point(28, 6); txtSearch.Width = 278;
             txtSearch.TextChanged += (s, e) => { btnClear.Visible = txtSearch.Text.Length > 0; RebuildList(Selected()); };
             txtSearch.KeyDown += (s, e) =>
@@ -1680,7 +1692,7 @@ namespace StretchRes
             right.Controls.Add(cmbFormat);
 
             btnFav = Theme.MakeButton("☆", false);
-            btnFav.Font = new Font("Segoe UI Symbol", 13f);
+            btnFav.Font = Theme.GetFont("Segoe UI Symbol", 13f, FontStyle.Regular);
             btnFav.Location = new Point(318, 167); btnFav.Size = new Size(34, 31);
             btnFav.Padding = new Padding(0); btnFav.TextAlign = ContentAlignment.MiddleCenter;
             btnFav.Click += (s, e) => ToggleFav();
@@ -1708,7 +1720,7 @@ namespace StretchRes
             hint.AutoSize = false; hint.Size = new Size(336, 80);
             // texte plus long dans certaines langues : on reduit un peu la police plutot que de le couper
             for (float sz = 8.5f; sz > 7f && TextRenderer.MeasureText(hint.Text, hint.Font, new Size(336, 0), TextFormatFlags.WordBreak).Height > 80; sz -= 0.25f)
-                hint.Font = new Font(L.FontName, sz - 0.25f);
+                hint.Font = Theme.UI(sz - 0.25f);
             right.Controls.Add(hint);
 
             // --- bas : les cases se suivent selon la longueur des textes
@@ -1759,6 +1771,12 @@ namespace StretchRes
         {
             txtSearch.Focus();
             txtSearch.SelectAll();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) tip.Dispose(); // la bulle d'aide a sa propre fenetre Windows
+            base.Dispose(disposing);
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
